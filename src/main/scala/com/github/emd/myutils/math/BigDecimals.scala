@@ -1,0 +1,76 @@
+/*
+ * Copyright 2020 Earl Dombowsky
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.github.emd.myutils.math
+
+import scala.math.BigDecimal.RoundingMode
+
+
+object BigDecimals {
+
+  /** Rounds to long (default: half up). */
+  def round(v: BigDecimal): Long = roundHalfUp(v)
+
+  /** Rounds to long (half up). */
+  def roundHalfUp(v: BigDecimal): Long =
+    v.setScale(0, RoundingMode.HALF_UP).longValue
+
+  /** Rounds to long (half even). */
+  def roundHalfEven(v: BigDecimal): Long =
+    v.setScale(0, RoundingMode.HALF_EVEN).longValue
+
+  /** Rounds to long (half down). */
+  def roundHalfDown(v: BigDecimal): Long =
+    v.setScale(0, RoundingMode.HALF_DOWN).longValue
+
+  /** Rounds to long (floor). */
+  def floor(v: BigDecimal): Long =
+    v.setScale(0, RoundingMode.FLOOR).longValue
+
+  /** Rounds to long (down). */
+  def roundDown(v: BigDecimal): Long =
+    v.setScale(0, RoundingMode.DOWN).longValue
+
+  /** Rounds to long (ceil). */
+  def ceil(v: BigDecimal): Long =
+    v.setScale(0, RoundingMode.CEILING).longValue
+
+  /** Rounds to long (up). */
+  def roundUp(v: BigDecimal): Long =
+    v.setScale(0, RoundingMode.UP).longValue
+
+  private[myutils] val SCALE_DIGITS_DEFAULT = 4
+
+  /** Scales value to keep given number of significant digits. */
+  @inline def scale(v: BigDecimal, digits: Int = SCALE_DIGITS_DEFAULT,
+    mode: BigDecimal.RoundingMode.RoundingMode = BigDecimal.RoundingMode.HALF_UP): BigDecimal =  {
+
+    // Adapt scale (significant digits) according to value.
+    // 'precision' = number of displayed digits
+    // 'scale' = number of decimal digits
+    // 'precision - scale' = (if >=0) number of integral digits
+    // If 'scale' is 0 (no decimal digits), keep it that way.
+    // If 'precision - scale >= digits' we already have enough integral digits
+    // and can set scale to 0 (truncate decimal digits).
+    // Otherwise we want to set scale to 'digits - integralDigits'.
+    val integralDigits = v.precision - v.scale
+    val scale =
+      if ((v.scale == 0) || (integralDigits >= digits)) 0
+      else digits - integralDigits
+
+    v.setScale(scale, mode)
+  }
+}

@@ -1,0 +1,196 @@
+/*
+ * Copyright 2020 Earl Dombowsky
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.github.emd.myutils.io
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+
+import com.github.emd.myutils.io.RichFile._
+
+/** Path (and filename) helpers. */
+// scalastyle:off non.ascii.character.disallowed
+object PathsEx {
+
+  /** Gets path (resolves leading '~' as user home). */
+  def get(path: String): Path = {
+    if (path.startsWith("~")) {
+      val rest = path.substring(2)
+      val home = RichFile.userHome.toPath
+      if (rest == "") home
+      else home.resolve(rest)
+    }
+    else Paths.get(path)
+  }
+
+  /** Gets filename (or basename; hierarchy leaf). */
+  def filename(name: String): String =
+    Paths.get(name).getFileName.toString
+
+  /** Rebuilds filename from 'atomic' name and extension. */
+  def filename(atomicName: String, extension: String): String =
+    if (extension.nonEmpty) s"$atomicName.$extension" else atomicName
+
+  /** Gets 'atomic' name (filename without extension). */
+  def atomicName(name: String): String = {
+    val parts = filename(name).split('.')
+    if (parts.length > 1) parts.view.slice(0, parts.length - 1).mkString(".")
+    else parts.head
+  }
+
+  /** Gets 'atomic' name (filename without extension). */
+  def atomicName(path: Path): String =
+    atomicName(path.getFileName.toString)
+
+  /** Gets extension (empty if none). */
+  def extension(name: String): String = {
+    val parts = filename(name).split('.')
+    if (parts.length > 1) parts(parts.length - 1)
+    else ""
+  }
+
+  /** Gets extension. */
+  def extension(path: Path): String =
+    extension(path.getFileName.toString)
+
+  // Linux has no real restrictions on characters that can be used in
+  // filenames. At most reserved characters can be used as long as they are
+  // quoted or escaped.
+  //
+  // Windows have reserved characters that cannot be used:
+  //   < (less than)
+  //   > (greater than)
+  //   : (colon)
+  //   " (double quote)
+  //   / (forward slash)
+  //   \ (backslash)
+  //   | (vertical bar or pipe)
+  //   ? (question mark)
+  //   * (asterisk)
+  // See: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx#naming_conventions
+  // It is then best to not use them (even on Linux, in case the file may be
+  // copied/moved to Windows).
+  //
+  // A simple solution would be to replace them with _ (underscore):
+  // str.replaceAll("""[<>:"/\\|?*]""", "_")
+  //
+  // Another solution is to replace them with Unicode alternatives.
+  // See (search): https://unicode-search.net/unicode-namesearch.pl
+  // Note: halfwidth/fullwidth variants may appear a little worse on Linux
+  // (small blank space on the right of each letter/symbol)
+  // Alternatives, listed in (subjective) preferred order:
+  //
+  // a<b a＜b
+  // < (U+003C less than sign)
+  // ＜ (U+FF1C fullwidth variant)
+  //
+  // a>b a＞b
+  // > (U+003E greater than sign)
+  // ＞ (U+FF1E fullwidth variant)
+  //
+  // a:b a꞉b a᎓b a：b
+  // : (U+003A colon)
+  // ꞉ (U+A789 modifier letter colon)
+  // ᎓ (U+1393 ethopic tonal mark short rikrik; may not appear good on Linux)
+  // ： (U+FF1A fullwidth variant)
+  //
+  // a"b a＂b
+  // " (U+0022 quotation mark)
+  // ＂ (U+FF02 fullwidth variant)
+  //
+  // a/b a⧸b a∕b a／b
+  // / (U+002F solidus)
+  // ⧸ (U+29F8 big solidus)
+  // ∕ (U+2215 division mark; may appear better on Linux, but has almost no space between letters in Windows explorer)
+  // ／ (U+FF0F fullwidth variant)
+  //
+  // a\b a⧹b a⧵b a＼b
+  // \ (U+005C reverse solidus)
+  // ⧹ (U+29F9 big reverse solidus)
+  // ⧵ (U+29F5 reverse solidus operator)
+  // ＼ (U+FF3C fullwidth variant)
+  //
+  // a|b aǀb a￨b a｜b
+  // | (U+007C vertical line)
+  // ǀ (U+01C0 latin letter dental click)
+  // ￨ (U+FFE8 halfwidth variant)
+  // ｜ (U+FF5C fullwidth variant)
+  //
+  // a?b a？b
+  // ? (U+003F question mark)
+  // ？ (U+FF1F fullwidth variant)
+  //
+  // a*b a∗b a⁎b a＊b
+  // * (U+002A asterisk)
+  // ∗ (U+2217 asterisk operator)
+  // ⁎ (U+204E low asterisk)
+  // ＊ (U+FF0A fullwidth variant)
+  private val sanitizedChars = Map[Char, Char](
+    '<' -> '＜', '>' -> '＞',
+    ':' -> '꞉',
+    '"' -> '＂',
+    '/' -> '⧸',
+    '\\' -> '⧹',
+    '|' -> 'ǀ',
+    '?' -> '？',
+    '*' -> '∗'
+  )
+
+  /** Sanitizes filename (replaces reserved characters). */
+  def sanitizeFilename(str: String): String = {
+    sanitizedChars.foldLeft(str) { (str, entry) =>
+      str.replace(entry._1, entry._2)
+    }
+  }
+
+  /** Gets backup path (".bak" suffix) for a given file. */
+  def backupPath(filepath: Path): Path = {
+    filepath.resolveSibling(filepath.getFileName.toString + ".bak")
+  }
+
+  /**
+   * Finds available path.
+   *
+   * Starting from given given path, find the first name that is available,
+   * adding " (n)" suffix (before extension if any for files) with 'n' starting
+   * from 1.
+   *
+   * @param path path to test
+   * @param isFile whether this is supposed to be a file path
+   * @return
+   */
+  def getAvailable(path: Path, isFile: Boolean = true): Path = {
+    @scala.annotation.tailrec
+    def loop(n: Int): Path = {
+      val probe = if (n == 0) {
+        path
+      } else if (isFile) {
+        val (base, ext) = path.toFile.baseAndExt
+        val extOpt = Some(ext).filterNot(_.isEmpty)
+        path.resolveSibling(s"$base ($n)${extOpt.map(v => s".$v").getOrElse("")}")
+      } else {
+        val name = path.name
+        path.resolveSibling(s"$name ($n)")
+      }
+      if (Files.exists(probe)) loop(n + 1)
+      else probe
+    }
+
+    loop(0)
+  }
+}
+// scalastyle:on non.ascii.character.disallowed

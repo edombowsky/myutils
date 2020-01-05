@@ -1,0 +1,53 @@
+/*
+ * Copyright 2020 Earl Dombowsky
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.github.emd.myutils.io
+
+import java.io.File
+import java.io.FileFilter
+
+import scala.language.implicitConversions
+import scala.util.matching.Regex
+
+/** File filter working with filenames. */
+abstract class NameFilter extends FileFilter with FileFilterOps {
+
+  def accept(name: String): Boolean
+
+  def accept(file: File): Boolean = accept(file.getName)
+}
+
+/** Simple name filter which accepts a file by its exact name. */
+class ExactNameFilter(val matchName: String) extends NameFilter {
+
+  def accept(name: String): Boolean = matchName == name
+}
+
+/** Simple name filter which accepts files whose name match a pattern. */
+class PatternNameFilter(val regex: Regex) extends NameFilter {
+
+  def accept(name: String): Boolean = regex.pattern.matcher(name).matches
+}
+
+/** Companion object. */
+object NameFilter {
+
+  /** Implicit conversion from string to exact filter. */
+  implicit def exactFilter(s: String): NameFilter = new ExactNameFilter(s)
+
+  /** Implicit conversion from regex to pattern filter. */
+  implicit def globFilter(r: Regex): NameFilter = new PatternNameFilter(r)
+}

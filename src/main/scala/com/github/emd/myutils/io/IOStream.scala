@@ -1,0 +1,119 @@
+/*
+ * Copyright 2020 Earl Dombowsky
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.github.emd.myutils.io
+
+import java.io.EOFException
+import java.io.InputStream
+import java.io.OutputStream
+
+
+object IOStream {
+
+  // TODO - move to 'RichInputStream' with implicit conversion ?
+  def readFully(input: InputStream, b: Array[Byte], off: Int, len: Int): Int = {
+    @scala.annotation.tailrec
+    def loop(off: Int, len: Int, total: Int): Int =
+      if (len <= 0) total
+      else {
+        val actual = input.read(b, off, len)
+        if (actual == -1) throw new EOFException()
+        else loop(off + actual, len - actual, total + actual)
+      }
+
+    loop(off, len, 0)
+  }
+
+  def skipFully(input: InputStream, n: Long): Long = {
+    @scala.annotation.tailrec
+    def loop(n: Long, total: Long): Long =
+      if (n <= 0) total
+      else {
+        val actual = input.skip(n)
+        if (actual == -1) throw new EOFException()
+        else loop(n - actual, total + actual)
+      }
+
+    loop(n, 0)
+  }
+
+  def transfer[T <: OutputStream](
+    input: InputStream,
+    output: T,
+    cb: (Array[Byte], Int, Int) => Unit = (_, _, _) => {},
+    len: Option[Int] = None
+  ): (T, Long) =
+  {
+    // TODO - parameter (with default value, or from Config) to set buffer size ?
+    val buffer = new Array[Byte](16 * 1024)
+    /* Note: *DO NOT* use Stream.foldLeft as it materializes the next element
+     * before calling the folding function (scala 2.10).
+     * To determine the total size transferred, possible solutions are then:
+     *  - Stream.map.sum (which does foldLeft, but on our element that did read+write)
+     *  - an alternative version of foldLeft, e.g.
+//    @scala.annotation.tailrec
+//    def foldLeft[A,B](stream: Stream[A])(z: B)(op: (B, A) => B): B = {
+//      if (stream.isEmpty) z
+//      else {
+//        val r = op(z, stream.head)
+//        foldLeft(stream.tail)(r)(op)
+//      }
+//    }
+     */
+
+    def stream(remaining: Option[Int]): LazyList[Int] = {
+      val request = remaining.map(scala.math.min(_, buffer.length)).getOrElse(buffer.length)
+      if (request <= 0) LazyList.empty
+      else {
+        val actual = input.read(buffer, 0, request)
+        if (actual == -1) LazyList.empty
+        else actual #:: stream(remaining map(_ - actual))
+      }
+    }
+
+    val size = stream(len).map { count =>
+      output.write(buffer, 0, count)
+      cb(buffer, 0, count)
+      count.longValue
+    }.sum
+    (output, size)
+  }
+
+  def process(
+    input: InputStream,
+    cb: (Array[Byte], Int, Int) => Unit,
+    len: Option[Int] = None
+  ): Long =
+  {
+    val buffer = new Array[Byte](16 * 1024)
+
+    def stream(remaining: Option[Int]): LazyList[Int] = {
+      val request = remaining.map(scala.math.min(_, buffer.length)).getOrElse(buffer.length)
+      if (request <= 0) LazyList.empty
+      else {
+        val actual = input.read(buffer, 0, request)
+        if (actual == -1) LazyList.empty
+        else actual #:: stream(remaining map(_ - actual))
+      }
+    }
+
+    stream(len).map { count =>
+      cb(buffer, 0, count)
+      count.longValue
+    }.sum
+  }
+
+}
