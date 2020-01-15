@@ -1,5 +1,3 @@
-package project
-
 /**
  * The following Scala compiler flags are taken from [[https://tpolecat.github.io/2017/04/25/scalac-flags.html tpolecat's blog]].
  */

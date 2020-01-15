@@ -1,4 +1,4 @@
-import project.CompilerFlags._
+import CompilerFlags._
 
 name := "myutils"
 version := "0.1"
