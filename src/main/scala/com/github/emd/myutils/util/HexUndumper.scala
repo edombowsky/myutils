@@ -16,20 +16,25 @@
 
 package com.github.emd.myutils.util
 
-import java.io._
+//import java.io._
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 import java.nio.charset.CodingErrorAction
 
 import scala.io.Codec
 import scala.io.Source
 
 /**
- * Hexadecimal data undumper.
- *
- * Offers a method to rebuild binary data from an hexadecimal representation
- * written by HexDumper.
- *
- * @param settings dumper parameters
- */
+  * Hexadecimal data undumper.
+  *
+  * Offers a method to rebuild binary data from an hexadecimal representation
+  * written by HexDumper.
+  *
+  * @param settings dumper parameters
+  */
 class HexUndumper(settings: HexUndumper.Settings) {
 
   import HexUndumper._
@@ -73,21 +78,23 @@ class HexUndumper(settings: HexUndumper.Settings) {
 }
 
 /**
- * Hexadecimal data undumper companion object.
- *
- * Offers ways to rebuild binary data from an hexadecimal representation
- * written by HexDumper.
- */
+  * Hexadecimal data undumper companion object.
+  *
+  * Offers ways to rebuild binary data from an hexadecimal representation
+  * written by HexDumper.
+  */
 object HexUndumper {
 
   /** Use ASCII as input charset, since we don't care about binary. */
-  private val inputCodec = Codec.apply("ASCII")
+  private val inputCodec = Codec
+    .apply("ASCII")
     .decodingReplaceWith(".")
     .onMalformedInput(CodingErrorAction.REPLACE)
     .onUnmappableCharacter(CodingErrorAction.REPLACE)
 
   /** Regular expression extracting hexadecimal representation. */
   private val lineFormat = """(?m)^(?:[^:]*:)?([\s-0-9A-Fa-f]+)\|?.*$""".r
+
   /** Regular expression extracting hexadecimal data from a representation. */
   private val hexFormat = """([0-9A-Fa-f]{2})""".r
 
@@ -98,18 +105,28 @@ object HexUndumper {
   protected def parseParams(args: Array[String]): Params = {
     val parser = new scopt.OptionParser[Params](getClass.getSimpleName) {
       note("Converts hexadecimal representation to binary data")
-      opt[File]("input").valueName("<file>").text("Input file (standard input by default)").action { (v, c) =>
-        c.copy(input = Some(v))
-      }
-      opt[File]("output").valueName("<file>").text("Output file (standard output by default)").action { (v, c) =>
-        c.copy(output = Some(v))
-      }
-      opt[Long]("offset").text("Offset in converted output from which to start").action { (v, c) =>
-        c.copy(offset = v)
-      }
-      opt[Long]("length").text("Number of bytes in converted output to process").action { (v, c) =>
-        c.copy(offset = v)
-      }
+      opt[File]("input")
+        .valueName("<file>")
+        .text("Input file (standard input by default)")
+        .action { (v, c) =>
+          c.copy(input = Some(v))
+        }
+      opt[File]("output")
+        .valueName("<file>")
+        .text("Output file (standard output by default)")
+        .action { (v, c) =>
+          c.copy(output = Some(v))
+        }
+      opt[Long]("offset")
+        .text("Offset in converted output from which to start")
+        .action { (v, c) =>
+          c.copy(offset = v)
+        }
+      opt[Long]("length")
+        .text("Number of bytes in converted output to process")
+        .action { (v, c) =>
+          c.copy(offset = v)
+        }
       checkConfig { c =>
         val inputEqualsOutputOpt = for {
           input <- c.input.map(_.getCanonicalPath)
@@ -117,7 +134,8 @@ object HexUndumper {
         } yield {
           input == output
         }
-        if (inputEqualsOutputOpt.getOrElse(false)) failure("Input and output cannot be the same")
+        if (inputEqualsOutputOpt.getOrElse(false))
+          failure("Input and output cannot be the same")
         else success
       }
     }
@@ -149,53 +167,53 @@ object HexUndumper {
   }
 
   /**
-   * Undumps data.
-   *
-   * @param dump where to get data to undump
-   * @param settings undumper settings
-   */
+    * Undumps data.
+    *
+    * @param dump where to get data to undump
+    * @param settings undumper settings
+    */
   def undump(dump: String, settings: Settings): Unit = {
     val undumper = new HexUndumper(settings)
     undumper.process(dump)
   }
 
   /**
-   * Undumps data.
-   *
-   * @param source where to get data to undump
-   * @param settings undumper settings
-   */
+    * Undumps data.
+    *
+    * @param source where to get data to undump
+    * @param settings undumper settings
+    */
   def undump(source: Source, settings: Settings): Unit = {
     val undumper = new HexUndumper(settings)
-    for (line <- source.getLines) {
+    for (line <- source.getLines()) {
       undumper.process(line)
     }
   }
 
   /**
-   * Undumps data.
-   *
-   * @param input where to get data to undump
-   * @param settings undumper settings
-   */
+    * Undumps data.
+    *
+    * @param input where to get data to undump
+    * @param settings undumper settings
+    */
   def undump(input: InputStream, settings: Settings): Unit =
     undump(Source.fromInputStream(input)(inputCodec), settings)
 
   /**
-   * Undumps data.
-   *
-   * @param file where to get data to undump
-   * @param settings undumper settings
-   */
+    * Undumps data.
+    *
+    * @param file where to get data to undump
+    * @param settings undumper settings
+    */
   def undump(file: File, settings: Settings): Unit =
     undump(Source.fromFile(file)(inputCodec), settings)
 
   /**
-   * Undumps data.
-   *
-   * @param dump hexadecimal representation of data to rebuild
-   * @return original data corresponding to the given hexadecimal representation
-   */
+    * Undumps data.
+    *
+    * @param dump hexadecimal representation of data to rebuild
+    * @return original data corresponding to the given hexadecimal representation
+    */
   def undump(dump: String): Array[Byte] = {
     // Re-use common function to undump
     var result: Option[Array[Byte]] = None
@@ -208,22 +226,22 @@ object HexUndumper {
   }
 
   /**
-   * Undumper settings.
-   *
-   * Defaults are:<ul>
-   *   <li>output: standard output</li>
-   *   <li>offset: 0</li>
-   *   <li>length: -1 (meaning whole data)</li>
-   * </ul>
-   *
-   * @param output where to dump the hexadecimal representation of data
-   * @param offset data offset
-   * @param length data length, negative value means whole data
-   */
+    * Undumper settings.
+    *
+    * Defaults are:<ul>
+    *   <li>output: standard output</li>
+    *   <li>offset: 0</li>
+    *   <li>length: -1 (meaning whole data)</li>
+    * </ul>
+    *
+    * @param output where to dump the hexadecimal representation of data
+    * @param offset data offset
+    * @param length data length, negative value means whole data
+    */
   case class Settings(
-    output: Output = Output.stdout,
-    offset: Long = 0,
-    length: Long = -1
+      output: Output = Output.stdout,
+      offset: Long = 0,
+      length: Long = -1
   )
 
   object Settings {
@@ -256,9 +274,9 @@ object HexUndumper {
 
   /** CLI parameters. */
   protected case class Params(
-    input: Option[File] = None,
-    output: Option[File] = None,
-    offset: Long = 0,
-    length: Long = -1
+      input: Option[File] = None,
+      output: Option[File] = None,
+      offset: Long = 0,
+      length: Long = -1
   )
 }

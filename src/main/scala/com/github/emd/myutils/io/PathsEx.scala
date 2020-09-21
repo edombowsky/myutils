@@ -20,7 +20,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-import com.github.emd.myutils.io.RichFile._
+import com.github.emd.myutils.io.RichFile.richFile
 
 /** Path (and filename) helpers. */
 // scalastyle:off non.ascii.character.disallowed
@@ -33,8 +33,7 @@ object PathsEx {
       val home = RichFile.userHome.toPath
       if (rest == "") home
       else home.resolve(rest)
-    }
-    else Paths.get(path)
+    } else Paths.get(path)
   }
 
   /** Gets filename (or basename; hierarchy leaf). */
@@ -140,7 +139,8 @@ object PathsEx {
   // ⁎ (U+204E low asterisk)
   // ＊ (U+FF0A fullwidth variant)
   private val sanitizedChars = Map[Char, Char](
-    '<' -> '＜', '>' -> '＞',
+    '<' -> '＜',
+    '>' -> '＞',
     ':' -> '꞉',
     '"' -> '＂',
     '/' -> '⧸',
@@ -163,16 +163,16 @@ object PathsEx {
   }
 
   /**
-   * Finds available path.
-   *
-   * Starting from given given path, find the first name that is available,
-   * adding " (n)" suffix (before extension if any for files) with 'n' starting
-   * from 1.
-   *
-   * @param path path to test
-   * @param isFile whether this is supposed to be a file path
-   * @return
-   */
+    * Finds available path.
+    *
+    * Starting from given given path, find the first name that is available,
+    * adding " (n)" suffix (before extension if any for files) with 'n' starting
+    * from 1.
+    *
+    * @param path path to test
+    * @param isFile whether this is supposed to be a file path
+    * @return
+    */
   def getAvailable(path: Path, isFile: Boolean = true): Path = {
     @scala.annotation.tailrec
     def loop(n: Int): Path = {
@@ -181,7 +181,9 @@ object PathsEx {
       } else if (isFile) {
         val (base, ext) = path.toFile.baseAndExt
         val extOpt = Some(ext).filterNot(_.isEmpty)
-        path.resolveSibling(s"$base ($n)${extOpt.map(v => s".$v").getOrElse("")}")
+        path.resolveSibling(
+          s"$base ($n)${extOpt.map(v => s".$v").getOrElse("")}"
+        )
       } else {
         val name = path.name
         path.resolveSibling(s"$name ($n)")

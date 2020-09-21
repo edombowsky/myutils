@@ -18,7 +18,6 @@ package com.github.emd.myutils.math
 
 import scala.math.BigDecimal.RoundingMode
 
-
 object BigDecimals {
 
   /** Rounds to long (default: half up). */
@@ -55,8 +54,12 @@ object BigDecimals {
   private[myutils] val SCALE_DIGITS_DEFAULT = 4
 
   /** Scales value to keep given number of significant digits. */
-  @inline def scale(v: BigDecimal, digits: Int = SCALE_DIGITS_DEFAULT,
-    mode: BigDecimal.RoundingMode.RoundingMode = BigDecimal.RoundingMode.HALF_UP): BigDecimal =  {
+  @inline def scale(
+      v: BigDecimal,
+      digits: Int = SCALE_DIGITS_DEFAULT,
+      mode: BigDecimal.RoundingMode.RoundingMode =
+        BigDecimal.RoundingMode.HALF_UP
+  ): BigDecimal = {
 
     // Adapt scale (significant digits) according to value.
     // 'precision' = number of displayed digits

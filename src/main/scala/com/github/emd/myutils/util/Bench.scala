@@ -17,8 +17,8 @@
 package com.github.emd.myutils.util
 
 import scala.concurrent.duration._
-import com.github.emd.myutils.math.BigDecimals.scale
 
+import com.github.emd.myutils.math.BigDecimals.scale
 
 /** Bench helpers. */
 object Bench {
@@ -29,42 +29,54 @@ object Bench {
   private val TIME_LOOPS_DEFAULT = 1000000
 
   /**
-   * Warmups.
-   *
-   * Ends when either:
-   *  - code has been called the requested number of times
-   *  - the elapsed duration reached the requested limit
-   *
-   * @param n how many loops (default 1000)
-   * @param duration how long to warmup (default 1s)
-   * @param f code to warmup
-   * @tparam T result type
-   * @return code result
-   */
-  def warmup[T](n: Int = WARMUP_LOOPS_DEFAULT, duration: Option[FiniteDuration] = Some(1.seconds))(f: => T): T = {
+    * Warmups.
+    *
+    * Ends when either:
+    *  - code has been called the requested number of times
+    *  - the elapsed duration reached the requested limit
+    *
+    * @param n how many loops (default 1000)
+    * @param duration how long to warmup (default 1s)
+    * @param f code to warmup
+    * @tparam T result type
+    * @return code result
+    */
+  def warmup[T](
+      n: Int = WARMUP_LOOPS_DEFAULT,
+      duration: Option[FiniteDuration] = Some(1.seconds)
+  )(f: => T): T = {
     time(None, n, duration)(f)
   }
 
   /**
-   * Times code.
-   *
-   * Ends when either:
-   *  - code has been called the requested number of times
-   *  - the elapsed duration reached the requested limit
-   *
-   * @param label label to indicate when printing time stats
-   * @param n how many loops (default 1000000)
-   * @param duration how long to warmup (default 2s)
-   * @param f code to warmup
-   * @tparam T result type
-   * @return code result
-   */
-  def time[T](label: String, n: Int = TIME_LOOPS_DEFAULT, duration: Option[FiniteDuration] = Some(2.seconds))(f: => T): T = {
+    * Times code.
+    *
+    * Ends when either:
+    *  - code has been called the requested number of times
+    *  - the elapsed duration reached the requested limit
+    *
+    * @param label label to indicate when printing time stats
+    * @param n how many loops (default 1000000)
+    * @param duration how long to warmup (default 2s)
+    * @param f code to warmup
+    * @tparam T result type
+    * @return code result
+    */
+  def time[T](
+      label: String,
+      n: Int = TIME_LOOPS_DEFAULT,
+      duration: Option[FiniteDuration] = Some(2.seconds)
+  )(f: => T): T = {
     time(Some(label), n, duration)(f)
   }
 
-  @inline private def time[T](label: Option[String], n: Int, duration: Option[FiniteDuration])(f: => T): T = {
+  @inline private def time[T](
+      label: Option[String],
+      n: Int,
+      duration: Option[FiniteDuration]
+  )(f: => T): T = {
     @inline def getTime: Long = System.nanoTime
+
     val timeScaleSecond = 1000000000L
     val timeScaleMillisecond = 1000000L
     val start = getTime
@@ -104,8 +116,10 @@ object Bench {
         BigDecimal(0)
       }
       // scalastyle:off token
-      println(s"$label: looped=<$looped> elapsed=<$elapsed> perLoop=<$perLoop> perLoopNs=<$perLoopNs> perSecond=<$rate>")
-      // scalastyle:on token
+      println(
+        s"$label: looped=<$looped> elapsed=<$elapsed> perLoop=<$perLoop> perLoopNs=<$perLoopNs> perSecond=<$rate>"
+      )
+    // scalastyle:on token
     }
     r
   }

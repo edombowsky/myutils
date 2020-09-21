@@ -64,7 +64,8 @@ object Util {
     val ct = implicitly[ClassTag[T]]
     // See: http://stackoverflow.com/a/12733172
     val appPath = Paths.get(
-      ct.runtimeClass.getProtectionDomain.getCodeSource.getLocation.toURI)
+      ct.runtimeClass.getProtectionDomain.getCodeSource.getLocation.toURI
+    )
     // We either got the class jar (file), or the running folder
     if (Files.isDirectory(appPath)) appPath
     else appPath.getParent
