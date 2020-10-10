@@ -1,6 +1,6 @@
 
-# Created by https://www.toptal.com/developers/gitignore/api/intellij+all,sbt,scala,metals,bloop,visualstudiocode,eclipse,netbeans
-# Edit at https://www.toptal.com/developers/gitignore?templates=intellij+all,sbt,scala,metals,bloop,visualstudiocode,eclipse,netbeans
+# Created by https://www.toptal.com/developers/gitignore/api/sbt,bloop,scala,metals,eclipse,netbeans,visualstudiocode,intellij+all
+# Edit at https://www.toptal.com/developers/gitignore?templates=sbt,bloop,scala,metals,eclipse,netbeans,visualstudiocode,intellij+all
 
 ### Bloop ###
 .bloop/
@@ -193,14 +193,16 @@ project/plugins/project/
 *.log
 
 ### VisualStudioCode ###
+#.vscode
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
 *.code-workspace
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
+.ionide
 
-# End of https://www.toptal.com/developers/gitignore/api/intellij+all,sbt,scala,metals,bloop,visualstudiocode,eclipse,netbeans
+# End of https://www.toptal.com/developers/gitignore/api/sbt,bloop,scala,metals,eclipse,netbeans,visualstudiocode,intellij+all

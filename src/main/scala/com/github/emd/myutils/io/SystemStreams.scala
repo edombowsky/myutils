@@ -1,26 +1,14 @@
-/*
- * Copyright 2020 Earl Dombowsky
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.github.emd.myutils.io
 
 import java.io.InputStream
 import java.io.PrintStream
 
 /** System streams (stdin, stdout, stderr). */
-class SystemStreams(val in: InputStream, val out: PrintStream, val err: PrintStream)
+class SystemStreams(
+    val in: InputStream,
+    val out: PrintStream,
+    val err: PrintStream
+)
 
 object SystemStreams {
 
@@ -31,7 +19,11 @@ object SystemStreams {
   def apply(): SystemStreams =
     SystemStreams(System.in, System.out, System.err)
 
-  def apply(in: InputStream, out: PrintStream, err: PrintStream): SystemStreams =
+  def apply(
+      in: InputStream,
+      out: PrintStream,
+      err: PrintStream
+  ): SystemStreams =
     new SystemStreams(in, out, err)
 
   /** Creates a PrintStream that logs written lines. */
@@ -42,14 +34,18 @@ object SystemStreams {
   //}
 
   /**
-   * Replace requested streams.
-   *
-   * @param in new stdin, or None
-   * @param out new stdout, or None
-   * @param err new stderr, or None
-   * @return initial streams
-   */
-  def replace(in: Option[InputStream] = None, out: Option[PrintStream] = None, err: Option[PrintStream] = None): SystemStreams = {
+    * Replace requested streams.
+    *
+    * @param in new stdin, or None
+    * @param out new stdout, or None
+    * @param err new stderr, or None
+    * @return initial streams
+    */
+  def replace(
+      in: Option[InputStream] = None,
+      out: Option[PrintStream] = None,
+      err: Option[PrintStream] = None
+  ): SystemStreams = {
     val previous = SystemStreams()
 
     in.foreach(System.setIn)
@@ -74,7 +70,11 @@ object SystemStreams {
     replace(in = None, out = Some(out), err = Some(err))
 
   /** Replace stdin, stdout and stderr. */
-  def replace(in: InputStream, out: PrintStream, err: PrintStream): SystemStreams =
+  def replace(
+      in: InputStream,
+      out: PrintStream,
+      err: PrintStream
+  ): SystemStreams =
     replace(in = Some(in), out = Some(out), err = Some(err))
 
   /** Restore system streams. */

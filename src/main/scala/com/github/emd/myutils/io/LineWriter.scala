@@ -1,19 +1,3 @@
-/*
- * Copyright 2020 Earl Dombowsky
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.github.emd.myutils.io
 
 import akka.actor.Actor
@@ -27,23 +11,25 @@ import com.github.emd.myutils.akka.CoreSystem
 trait LineWriter {
 
   /**
-   * Write one line.
-   *
-   * Note: line must not contain line ending (CR and/or LF).
-   */
+    * Write one line.
+    *
+    * Note: line must not contain line ending (CR and/or LF).
+    */
   def write(line: String): Unit
 }
 
-
-class ProxyLineWriter(_writers: Seq[LineWriter] = Seq.empty, async: Boolean = false)
-  extends LineWriter {
+class ProxyLineWriter(
+    _writers: Seq[LineWriter] = Seq.empty,
+    async: Boolean = false
+) extends LineWriter {
 
   protected var writers: Set[LineWriter] = _writers.toSet
 
   protected val system: ActorSystem = CoreSystem.system
   protected val actor: Option[ActorRef] =
     if (!async) None
-    else Some(system.actorOf(Props(new ProxyActor).withDispatcher("dispatcher")))
+    else
+      Some(system.actorOf(Props(new ProxyActor).withDispatcher("dispatcher")))
 
   override def write(line: String): Unit = {
     actor.fold {

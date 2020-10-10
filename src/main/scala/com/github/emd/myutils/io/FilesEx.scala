@@ -1,19 +1,3 @@
-/*
- * Copyright 2020 Earl Dombowsky
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.github.emd.myutils.io
 
 import java.io.File
@@ -27,31 +11,32 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributeView
 
-
 object FilesEx {
 
   case class Owner(user: Option[String], group: Option[String])
 
   /**
-   * Copies file/directory from source to target.
-   *
-   * Recursively processes folders. Also processes real path for symbolic links.
-   *
-   * @param sourceRoot  root for source file
-   * @param source      (relative) source to copy
-   * @param targetRoot  root for target file
-   * @param followLinks whether to follow (and process real path) links
-   * @param owner       specific owner to set when creating target directories
-   *   that do not have a source equivalent
-   */
+    * Copies file/directory from source to target.
+    *
+    * Recursively processes folders. Also processes real path for symbolic links.
+    *
+    * @param sourceRoot  root for source file
+    * @param source      (relative) source to copy
+    * @param targetRoot  root for target file
+    * @param followLinks whether to follow (and process real path) links
+    * @param owner       specific owner to set when creating target directories
+    *   that do not have a source equivalent
+    */
   // scalastyle:off method.length
   def copy(
-    sourceRoot: Path,
-    source: Path,
-    targetRoot: Path,
-    followLinks: Boolean = true,
-    owner: Option[Owner] = None,
-    options: List[CopyOption] = List(StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)): Unit = {
+      sourceRoot: Path,
+      source: Path,
+      targetRoot: Path,
+      followLinks: Boolean = true,
+      owner: Option[Owner] = None,
+      options: List[CopyOption] =
+        List(StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
+  ): Unit = {
 
     def copy(sourceRoot: Path, source: Option[Path], targetRoot: Path): Unit = {
 
@@ -61,27 +46,41 @@ object FilesEx {
         case Some(srcPath) =>
           val sourcePath = sourceRoot.resolve(srcPath)
           val sourceRealPath =
-            if (followLinks) sourcePath.getParent.toRealPath().resolve(sourcePath.toFile.getName)
+            if (followLinks)
+              sourcePath.getParent
+                .toRealPath()
+                .resolve(sourcePath.toFile.getName)
             else sourcePath
 
           if (followLinks && !sourceRealPath.startsWith(sourceRoot)) {
-            println(s"DEBUG: Real path[$sourceRealPath] is outside root path[$sourceRoot], skipping")
+            println(
+              s"DEBUG: Real path[$sourceRealPath] is outside root path[$sourceRoot], skipping"
+            )
           } else {
             val sourceReal = sourceRoot.relativize(sourceRealPath)
             val pathTarget = targetRoot.resolve(sourceReal)
 
-            if (! pathTarget.exists) {
+            if (!pathTarget.exists) {
               // first make sure parent exists (both real and possible link)
               copy(sourceRoot, Option(srcPath.getParent), targetRoot)
 
-              if (followLinks) copy(sourceRoot, Option(sourceReal.getParent), targetRoot)
+              if (followLinks)
+                copy(sourceRoot, Option(sourceReal.getParent), targetRoot)
 
               // then copy source to target
-              if (Files.isRegularFile(sourceRealPath) || Files.isSymbolicLink(sourceRealPath) || Files.isDirectory(sourceRealPath)) {
-                println(s"TRACE: Copying source[$sourceRealPath] to[$pathTarget]")
+              if (
+                Files.isRegularFile(sourceRealPath) || Files.isSymbolicLink(
+                  sourceRealPath
+                ) || Files.isDirectory(sourceRealPath)
+              ) {
+                println(
+                  s"TRACE: Copying source[$sourceRealPath] to[$pathTarget]"
+                )
                 Files.copy(sourceRealPath, pathTarget, options: _*)
               } else {
-                println(s"WARN: Real path[$sourceRealPath] is not a regular file/directory, skipping")
+                println(
+                  s"WARN: Real path[$sourceRealPath] is not a regular file/directory, skipping"
+                )
               }
               ()
             }
@@ -110,15 +109,17 @@ object FilesEx {
 
   // scalastyle:off null
   def setTimes(path: Path, times: FileTimes): Unit = {
-    if ((times.lastModified != null) || (times.creation != null) || (times.lastAccess != null)) {
+    if (
+      (times.lastModified != null) || (times.creation != null) || (times.lastAccess != null)
+    ) {
       // If there is only the 'last modified' time, set it directly on 'File'.
       // Otherwise change the file attributes.
       if ((times.creation == null) && (times.lastAccess == null)) {
         path.toFile.setLastModified(times.lastModified.toMillis)
         ()
-      }
-      else {
-        val attrView = Files.getFileAttributeView(path, classOf[BasicFileAttributeView])
+      } else {
+        val attrView =
+          Files.getFileAttributeView(path, classOf[BasicFileAttributeView])
         attrView.setTimes(times.lastModified, times.lastAccess, times.creation)
       }
     }
@@ -127,13 +128,13 @@ object FilesEx {
   // scalastyle:on null
 
   /**
-   * Maps file in memory.
-   *
-   * @param file file to map
-   * @param offset offset in file
-   * @param length length of data to map
-   * @return mapped buffer
-   */
+    * Maps file in memory.
+    *
+    * @param file file to map
+    * @param offset offset in file
+    * @param length length of data to map
+    * @return mapped buffer
+    */
   def map(file: File, offset: Long = 0, length: Long = -1): MappedByteBuffer = {
     val input = new FileInputStream(file)
     val channel = input.getChannel

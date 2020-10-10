@@ -1,19 +1,3 @@
-/*
- * Copyright 2020 Earl Dombowsky
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.github.emd.myutils.akka
 
 import scala.collection.mutable.ArrayBuffer
@@ -23,8 +7,8 @@ import akka.actor.ActorRef
 import akka.actor.Terminated
 
 /**
- * Reaper companion object.
- */
+  * Reaper companion object.
+  */
 object Reaper {
 
   /** Actor message: register an Actor for watching. */
@@ -33,13 +17,13 @@ object Reaper {
 }
 
 /**
- * Actors system reaper.
- *
- * The reaper watch over a list of registered actors, and call `allSoulsReaped`
- * once all actors terminated.
- *
- * @see [[http://letitcrash.com/post/30165507578/shutdown-patterns-in-akka-2]]
- */
+  * Actors system reaper.
+  *
+  * The reaper watch over a list of registered actors, and call `allSoulsReaped`
+  * once all actors terminated.
+  *
+  * @see [[http://letitcrash.com/post/30165507578/shutdown-patterns-in-akka-2]]
+  */
 abstract class Reaper extends Actor {
   import Reaper._
 
@@ -47,9 +31,9 @@ abstract class Reaper extends Actor {
   protected val watched = ArrayBuffer.empty[ActorRef]
 
   /**
-   * Subclasses need to implement this method. It's the hook that's called when
-   * everything's dead.
-   */
+    * Subclasses need to implement this method. It's the hook that's called when
+    * everything's dead.
+    */
   protected def allSoulsReaped(): Unit
 
   /** Watch and check for termination. */

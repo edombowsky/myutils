@@ -1,19 +1,3 @@
-/*
- * Copyright 2020 Earl Dombowsky
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.github.emd.myutils.io
 
 import java.io.File
@@ -30,7 +14,6 @@ import scala.io.Codec
 import scala.language.implicitConversions
 
 import com.github.emd.myutils.misc.Util
-
 
 final class RichFile(val asFile: File) extends AnyVal {
 
@@ -72,8 +55,11 @@ final class RichFile(val asFile: File) extends AnyVal {
   def changeOwner(user: Option[String], group: Option[String]): Unit = {
     if (user.isDefined || group.isDefined) {
       val lookupService = FileSystems.getDefault.getUserPrincipalLookupService
-      val posix: PosixFileAttributeView = Files.getFileAttributeView(asFile.toPath,
-        classOf[PosixFileAttributeView], LinkOption.NOFOLLOW_LINKS)
+      val posix: PosixFileAttributeView = Files.getFileAttributeView(
+        asFile.toPath,
+        classOf[PosixFileAttributeView],
+        LinkOption.NOFOLLOW_LINKS
+      )
       user foreach { user =>
         posix.setOwner(lookupService.lookupPrincipalByName(user))
       }
@@ -84,21 +70,28 @@ final class RichFile(val asFile: File) extends AnyVal {
   }
 
   def changeMode(permissions: java.util.Set[PosixFilePermission]): Unit = {
-    val posix: PosixFileAttributeView = Files.getFileAttributeView(asFile.toPath,
-      classOf[PosixFileAttributeView], LinkOption.NOFOLLOW_LINKS)
+    val posix: PosixFileAttributeView = Files.getFileAttributeView(
+      asFile.toPath,
+      classOf[PosixFileAttributeView],
+      LinkOption.NOFOLLOW_LINKS
+    )
     posix.setPermissions(permissions)
   }
 
   /**
-   * Deletes file/directory.
-   *
-   * @param recursive whether to process recursively
-   * @param onlyChildren whether to only delete children (if any) or root too
-   */
-  def delete(recursive: Boolean, onlyChildren: Boolean = false): Boolean =
-  {
+    * Deletes file/directory.
+    *
+    * @param recursive whether to process recursively
+    * @param onlyChildren whether to only delete children (if any) or root too
+    */
+  def delete(recursive: Boolean, onlyChildren: Boolean = false): Boolean = {
     @annotation.tailrec
-    def loop(files: List[File], rest: List[File], onlyChildren: Boolean, success: Boolean): Boolean =
+    def loop(
+        files: List[File],
+        rest: List[File],
+        onlyChildren: Boolean,
+        success: Boolean
+    ): Boolean =
       files match {
         case Nil =>
           rest match {
@@ -106,12 +99,21 @@ final class RichFile(val asFile: File) extends AnyVal {
               success
 
             case head :: tail =>
-              loop(Nil, tail, onlyChildren = false, success = head.delete() & success)
+              loop(
+                Nil,
+                tail,
+                onlyChildren = false,
+                success = head.delete() & success
+              )
           }
 
         case head :: tail =>
           val children =
-            if (recursive && head.isDirectory && !Files.isSymbolicLink(head.toPath)) {
+            if (
+              recursive && head.isDirectory && !Files.isSymbolicLink(
+                head.toPath
+              )
+            ) {
               Util.wrapNull(head.listFiles).toList
             } else {
               Nil
@@ -120,9 +122,13 @@ final class RichFile(val asFile: File) extends AnyVal {
             if (onlyChildren) (rest, success)
             else if (children.isEmpty) {
               (rest, head.delete() & success)
-            }
-            else (head :: rest, success)
-          loop(tail ::: children, newRest, onlyChildren = false, success = newSuccess)
+            } else (head :: rest, success)
+          loop(
+            tail ::: children,
+            newRest,
+            onlyChildren = false,
+            success = newSuccess
+          )
       }
 
     if (exists) loop(List(asFile), Nil, onlyChildren, success = true)
@@ -140,8 +146,7 @@ final class RichFile(val asFile: File) extends AnyVal {
     val writer = new PrintWriter(asFile, enc)
     try {
       writer.write(s)
-    }
-    finally {
+    } finally {
       writer.close()
     }
   }
@@ -163,7 +168,9 @@ object RichFile {
   def apply(f: String): RichFile = RichFile(new File(f))
 
   def userHome: File =
-    Option(System.getenv("HOME")) orElse Option(System.getProperty("user.home")) map {
+    Option(System.getenv("HOME")) orElse Option(
+      System.getProperty("user.home")
+    ) map {
       new File(_)
     } getOrElse {
       throw new Error("User home directory is unknown")
@@ -172,11 +179,11 @@ object RichFile {
   val sep: Char = File.separatorChar
 
   /**
-   * Creates temporary directory.
-   *
-   * @param prefix name prefix, can be <tt>null</tt>
-   * @return temporary directory
-   */
+    * Creates temporary directory.
+    *
+    * @param prefix name prefix, can be <tt>null</tt>
+    * @return temporary directory
+    */
   def createTempDirectory(prefix: String): File =
     Files.createTempDirectory(prefix).toFile
 }
